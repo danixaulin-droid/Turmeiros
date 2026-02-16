@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 250, 250, 250; /* Whiter background for contrast */
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  color: #000000; /* Absolute black for text */
+  background-color: #f8fafc; /* Slate-50 */
+  min-height: 100vh;
+  /* Prevent pull-to-refresh on mobile for better app-feel */
+  overscroll-behavior-y: none;
+  font-size: 16px; /* Base size increase */
+  padding-bottom: 90px; /* Space for Bottom Nav */
+}
+
+/* High Contrast Inputs */
+input, select, textarea {
+  font-size: 18px !important; /* Prevent iOS zoom and improve readability */
+  border-width: 2px !important;
+  border-color: #1e293b !important; /* Slate-800 */
+  color: #000000 !important;
+  font-weight: 700 !important;
+  background-color: #ffffff !important;
+  border-radius: 0.5rem;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none !important;
+  border-color: #1d4ed8 !important; /* Blue-700 */
+  box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.2) !important;
+}
+
+/* Tap Highlight removal for cleaner feel */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
