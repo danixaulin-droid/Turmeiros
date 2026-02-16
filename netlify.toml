@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  publish = "out"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Garante que qualquer rota não encontrada vá para o index (SPA fallback)
+# Útil se em algum momento sair do HashRouter ou para deep linking
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
