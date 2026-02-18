@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../../../lib/db';
 import { Header } from '../../../../components/layout/Header';
@@ -8,8 +10,9 @@ import { Card, CardContent } from '../../../../components/ui/Card';
 import { generateUUID } from '../../../../lib/utils';
 
 export default function NewShiftPage() {
-  const { id: workdayId } = useParams();
-  const navigate = useNavigate();
+  const params = useParams();
+  const workdayId = (params as any).id as string;
+  const router = useRouter();
   const [orchardId, setOrchardId] = useState('');
   const [pricePerBox, setPricePerBox] = useState('');
   const [error, setError] = useState('');
@@ -52,7 +55,7 @@ export default function NewShiftPage() {
         await db.counts.bulkAdd(countPromises);
 
         // Go back to marking (it will auto-detect the new latest shift)
-        navigate(`/day/${workdayId}/mark`);
+        router.push(`/day/${workdayId}/mark`);
     } catch (err) {
         console.error(err);
         setError('Erro ao criar turno.');

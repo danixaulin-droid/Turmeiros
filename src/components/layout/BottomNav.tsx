@@ -1,12 +1,15 @@
+"use client";
+
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../lib/db';
 import { Home, CheckSquare, Calendar, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 
 export function BottomNav() {
-  const location = useLocation();
+  const pathname = usePathname();
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   
   // Logic: 
@@ -30,8 +33,8 @@ export function BottomNav() {
           : null;
 
   const isActive = (path: string) => {
-      if (path === '/') return location.pathname === '/';
-      return location.pathname.startsWith(path);
+      if (path === '/') return pathname === '/';
+      return pathname.startsWith(path);
   }
 
   const navItems = [
@@ -63,7 +66,7 @@ export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-900 h-20 z-[90] pb-safe flex justify-around items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
       {navItems.map((item) => {
-        const active = item.exact ? location.pathname === item.path : isActive(item.path);
+        const active = item.exact ? pathname === item.path : isActive(item.path);
         const Icon = item.icon;
         
         if (item.disabled) {
@@ -78,7 +81,7 @@ export function BottomNav() {
         return (
           <Link 
             key={item.label} 
-            to={item.path}
+            href={item.path}
             className={`flex flex-col items-center justify-center w-full h-full transition-all active:scale-95
               ${active ? 'text-blue-800' : 'text-gray-500 hover:text-gray-900'}
             `}

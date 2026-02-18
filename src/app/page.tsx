@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, Workday, Shift } from '../lib/db';
 import { format } from 'date-fns';
@@ -138,7 +140,7 @@ export default function Dashboard() {
                                 <p className="text-xl font-bold text-gray-500">caixas marcadas</p>
                             </div>
 
-                            <Link to={`/day/${activeWorkday.id}/mark`} className="block">
+                            <Link href={`/day/${activeWorkday.id}/mark`} className="block">
                                 <button className="w-full h-32 rounded-2xl bg-blue-700 active:bg-blue-800 text-white shadow-xl border-b-8 border-blue-900 flex flex-col items-center justify-center gap-2">
                                     <PlayCircle className="w-12 h-12" />
                                     <span className="text-3xl font-black uppercase">MARCAR CAIXAS</span>
@@ -146,7 +148,7 @@ export default function Dashboard() {
                             </Link>
                             <p className="text-center text-gray-500 font-bold text-lg">Toque no botão azul para marcar</p>
 
-                            <Link to={`/day/${activeWorkday.id}/summary`} className="block mt-4">
+                            <Link href={`/day/${activeWorkday.id}/summary`} className="block mt-4">
                                 <button className="w-full h-20 rounded-xl bg-white border-4 border-gray-300 text-gray-700 font-black text-xl uppercase flex items-center justify-center gap-3 active:bg-gray-100">
                                     <ListTodo className="w-8 h-8" />
                                     FECHAR O DIA / RESUMO
@@ -161,13 +163,13 @@ export default function Dashboard() {
                                 <p className="text-lg font-bold text-gray-600">O dia de hoje já foi finalizado.</p>
                              </div>
                              
-                             <Link to={`/day/${activeWorkday.id}/summary`}>
+                             <Link href={`/day/${activeWorkday.id}/summary`}>
                                 <Button variant="secondary" size="xl" className="w-full mt-4">
                                     VER RESUMO DO DIA
                                 </Button>
                              </Link>
 
-                             <Link to="/day/new">
+                             <Link href="/day/new">
                                 <Button variant="success" size="xl" className="w-full mt-4">
                                     INICIAR NOVO DIA
                                 </Button>
@@ -179,7 +181,7 @@ export default function Dashboard() {
                         <h2 className="text-3xl font-black text-gray-800">Olá, Turmeiro!</h2>
                         <p className="text-xl text-gray-600 font-medium px-4">Não há nenhum dia aberto. Vamos começar?</p>
                         
-                        <Link to="/day/new" className="block">
+                        <Link href="/day/new" className="block">
                             <button className="w-full h-32 rounded-2xl bg-green-600 active:bg-green-700 text-white shadow-xl border-b-8 border-green-800 flex flex-col items-center justify-center gap-2 animate-bounce-slow">
                                 <PlayCircle className="w-12 h-12" />
                                 <span className="text-3xl font-black uppercase">INICIAR DIA</span>
@@ -191,11 +193,11 @@ export default function Dashboard() {
                 <div className="border-t-2 border-gray-200 pt-6 mt-8">
                     <p className="text-center text-gray-400 font-bold uppercase mb-4">Outras Opções</p>
                     <div className="grid grid-cols-2 gap-4">
-                         <Link to="/week" className="bg-gray-100 p-4 rounded-xl text-center font-bold text-gray-700 border-b-4 border-gray-300 active:border-b-0 active:translate-y-1">
+                         <Link href="/week" className="bg-gray-100 p-4 rounded-xl text-center font-bold text-gray-700 border-b-4 border-gray-300 active:border-b-0 active:translate-y-1">
                             <CalendarDays className="w-8 h-8 mx-auto mb-2" />
                             SEMANA
                          </Link>
-                         <Link to="/settings" className="bg-gray-100 p-4 rounded-xl text-center font-bold text-gray-700 border-b-4 border-gray-300 active:border-b-0 active:translate-y-1">
+                         <Link href="/settings" className="bg-gray-100 p-4 rounded-xl text-center font-bold text-gray-700 border-b-4 border-gray-300 active:border-b-0 active:translate-y-1">
                             <Settings2 className="w-8 h-8 mx-auto mb-2" />
                             AJUSTES
                          </Link>
@@ -274,7 +276,7 @@ export default function Dashboard() {
             
             <div className="grid grid-cols-1 gap-3">
                 {isDayOpen ? (
-                    <Link to={`/day/${activeWorkday.id}/mark`}>
+                    <Link href={`/day/${activeWorkday.id}/mark`}>
                     <Button className="w-full bg-white text-blue-900 border-b-8 border-gray-300 hover:bg-gray-100 hover:border-gray-400 active:border-b-0 active:translate-y-2 transition-all" size="xl">
                         <PlayCircle className="mr-3 w-8 h-8" />
                         CONTINUAR
@@ -286,7 +288,7 @@ export default function Dashboard() {
                     </div>
                 )}
                 
-                <Link to={`/day/${activeWorkday.id}/summary`}>
+                <Link href={`/day/${activeWorkday.id}/summary`}>
                     <Button variant="outline" className={`w-full border-2 ${isDayOpen ? 'border-blue-400 text-blue-100 bg-blue-800/50 hover:bg-blue-800' : 'border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600'}`}>
                         Ver Resumo / {isDayOpen ? 'Fechar' : 'Reabrir'}
                     </Button>
@@ -304,7 +306,7 @@ export default function Dashboard() {
                   <h2 className="text-xl font-black text-gray-900">Tudo pronto!</h2>
                   <p className="text-gray-500 font-medium">Nenhum dia aberto no momento.</p>
               </div>
-              <Link to="/day/new" className="block">
+              <Link href="/day/new" className="block">
                 <Button className="w-full text-xl shadow-lg" size="xl" variant="success">
                 <PlayCircle className="mr-3 w-8 h-8" />
                 INICIAR DIA
@@ -315,14 +317,14 @@ export default function Dashboard() {
 
         {/* QUICK NAVIGATION */}
         <div className="grid grid-cols-2 gap-4">
-            <Link to="/week">
+            <Link href="/week">
               <Card className="h-32 flex flex-col items-center justify-center bg-white active:bg-gray-50 border-b-4 border-gray-900 hover:bg-gray-50 transition-colors">
                 <CalendarDays className="w-10 h-10 text-blue-800 mb-2" />
                 <span className="font-black text-lg text-gray-900">SEMANA</span>
               </Card>
             </Link>
 
-            <Link to="/settings">
+            <Link href="/settings">
               <Card className="h-32 flex flex-col items-center justify-center bg-white active:bg-gray-50 border-b-4 border-gray-900 hover:bg-gray-50 transition-colors">
                 <Settings2 className="w-10 h-10 text-gray-700 mb-2" />
                 <span className="font-black text-lg text-gray-900">AJUSTES</span>
@@ -330,7 +332,7 @@ export default function Dashboard() {
             </Link>
         </div>
 
-         <Link to="/backup">
+         <Link href="/backup">
              <Button variant="outline" className="w-full justify-between px-6 h-20 border-b-4">
                <div className="flex items-center">
                   <HardDriveDownload className="mr-4 w-8 h-8 text-gray-700" />

@@ -1,5 +1,8 @@
+"use client";
+
 import React, { useState, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../../../lib/db';
 import { Header } from '../../../../components/layout/Header';
@@ -12,7 +15,8 @@ import FileSaver from 'file-saver';
 import { Download, Check, Lock, AlertTriangle, ArrowLeft, ChevronDown, ChevronUp, CalendarDays, Unlock } from 'lucide-react';
 
 export default function DaySummaryPage() {
-  const { id: workdayId } = useParams();
+  const params = useParams();
+  const workdayId = (params as any).id as string;
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [showReopenModal, setShowReopenModal] = useState(false);
   const [expandedShifts, setExpandedShifts] = useState<Record<string, boolean>>({});
@@ -252,7 +256,7 @@ export default function DaySummaryPage() {
                         </div>
                     </div>
                     
-                    <Link to="/week">
+                    <Link href="/week">
                         <Button className="w-full h-16 text-lg bg-blue-700 hover:bg-blue-800" size="xl">
                             <CalendarDays className="mr-2 w-6 h-6" />
                             VER RESUMO SEMANAL

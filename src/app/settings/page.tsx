@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Header } from '../../components/layout/Header';
 import { Button } from '../../components/ui/Button';
 import { Users, Trees, TestTube2, Accessibility, Eye } from 'lucide-react';
@@ -40,19 +40,19 @@ export default function SettingsPage() {
             </div>
         </div>
 
-        <Link to="/settings/pickers" className="block mt-6">
+        <Link href="/settings/pickers" className="block mt-6">
           <Button variant="outline" className="w-full h-20 text-lg justify-start font-bold">
             <Users className="mr-4 w-8 h-8 text-blue-600" />
             Cadastrar Colhedores
           </Button>
         </Link>
-        <Link to="/settings/orchards" className="block">
+        <Link href="/settings/orchards" className="block">
           <Button variant="outline" className="w-full h-20 text-lg justify-start font-bold">
             <Trees className="mr-4 w-8 h-8 text-green-600" />
             Cadastrar Pomares
           </Button>
         </Link>
-        <Link to="/settings/debug" className="block mt-8">
+        <Link href="/settings/debug" className="block mt-8">
             <Button variant="secondary" className="w-full justify-start text-gray-500 h-14">
                 <TestTube2 className="mr-4 w-6 h-6" />
                 Teste Automático (Debug)

@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../../lib/db';
 import { Header } from '../../../components/layout/Header';
@@ -9,7 +11,7 @@ import { format } from 'date-fns';
 import { generateUUID } from '../../../lib/utils';
 
 export default function NewDayPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [orchardId, setOrchardId] = useState('');
   const [pricePerBox, setPricePerBox] = useState('');
@@ -23,7 +25,7 @@ export default function NewDayPage() {
     const existing = await db.workdays.where('date').equals(date).first();
     if (existing) {
         if(confirm(`Já existe uma diária para ${date}. Deseja abrir a existente?`)) {
-            navigate(`/day/${existing.id}/mark`);
+            router.push(`/day/${existing.id}/mark`);
         }
     }
   };
@@ -93,7 +95,7 @@ export default function NewDayPage() {
         
         await db.counts.bulkAdd(countPromises);
 
-        navigate(`/day/${workdayId}/mark`);
+        router.push(`/day/${workdayId}/mark`);
     } catch (err) {
         console.error(err);
         setError('Erro ao criar diária.');

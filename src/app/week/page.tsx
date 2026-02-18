@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../lib/db';
@@ -9,7 +11,7 @@ import { startOfWeek, endOfWeek, subWeeks, addWeeks, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import FileSaver from 'file-saver';
 import { Download, ChevronLeft, ChevronRight, AlertCircle, CalendarDays, ChevronDown, ChevronUp, ExternalLink, Lock, CheckCircle2, Unlock, AlertTriangle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 // Types for data structure
 interface DailyBreakdown {
@@ -334,7 +336,7 @@ export default function WeekPage() {
                                 </div>
                             </div>
                         ) : (
-                            <Link to={`/day/${day.id}/summary`} className="block active:bg-gray-50">
+                            <Link href={`/day/${day.id}/summary`} className="block active:bg-gray-50">
                                 <div className="p-3 flex justify-between items-center">
                                     <div>
                                         <div className="flex items-center gap-2">

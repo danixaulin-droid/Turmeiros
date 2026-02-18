@@ -2,16 +2,10 @@ import withPWA from 'next-pwa';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  // OBRIGATÓRIO PARA NETLIFY + OFFLINE ESTÁVEL:
-  output: 'export', 
-  // Desativar otimização de imagem pois 'export' não suporta processamento em tempo real
+  reactStrictMode: true,  // Desativar otimização de imagem pois 'export' não suporta processamento em tempo real
   images: {
     unoptimized: true,
-  },
-  // Garantir trailing slash para evitar problemas de rota em hospedagem estática
-  trailingSlash: true,
-};
+  },};
 
 const pwaConfig = withPWA({
   dest: 'public',

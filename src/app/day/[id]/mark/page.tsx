@@ -1,5 +1,8 @@
+"use client";
+
 import React, { useState, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../../../lib/db';
 import { Header } from '../../../../components/layout/Header';
@@ -9,7 +12,8 @@ import { Search, ArrowUpDown, ListTodo, RefreshCw, X, Check, Lock, LayoutGrid, L
 import { useSettings } from '../../../../lib/SettingsContext';
 
 export default function MarkPage() {
-  const { id: workdayId } = useParams();
+  const params = useParams();
+  const workdayId = (params as any).id as string;
   const { isEasyMode } = useSettings();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'boxes'>('name');
@@ -158,12 +162,12 @@ export default function MarkPage() {
     <div className="flex flex-col h-screen bg-gray-100">
       {isEasyMode ? (
          <div className="bg-blue-800 text-white p-3 flex justify-between items-center shadow-lg shrink-0">
-             <Link to="/" className="flex items-center gap-2 p-2 bg-blue-900 rounded-lg border border-blue-600">
+             <Link href="/" className="flex items-center gap-2 p-2 bg-blue-900 rounded-lg border border-blue-600">
                  <ArrowLeft className="w-8 h-8" />
                  <span className="font-bold uppercase text-sm">Voltar</span>
              </Link>
              <h1 className="text-xl font-black uppercase">Marcar Caixas</h1>
-             <Link to={`/day/${workdayId}/summary`} className="flex flex-col items-center bg-blue-900 p-2 rounded-lg border border-blue-600">
+             <Link href={`/day/${workdayId}/summary`} className="flex flex-col items-center bg-blue-900 p-2 rounded-lg border border-blue-600">
                  <ListTodo className="w-6 h-6" />
                  <span className="text-[10px] font-bold uppercase">Resumo</span>
              </Link>
@@ -173,7 +177,7 @@ export default function MarkPage() {
             title={isClosed ? "Dia Fechado" : "Marcação"} 
             showBack 
             action={
-                <Link to={`/day/${workdayId}/summary`} className="text-white hover:text-blue-200 p-2">
+                <Link href={`/day/${workdayId}/summary`} className="text-white hover:text-blue-200 p-2">
                     <ListTodo className="w-7 h-7" />
                 </Link>
             }

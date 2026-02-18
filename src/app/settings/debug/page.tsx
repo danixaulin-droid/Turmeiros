@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { db } from '../../../lib/db';
 import { Header } from '../../../components/layout/Header';
