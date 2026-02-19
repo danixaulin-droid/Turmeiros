@@ -13,14 +13,41 @@ import { format } from "date-fns";
 import FileSaver from "file-saver";
 import { Download, Check, CalendarDays } from "lucide-react";
 
+/** ✅ Tipos para evitar "implicit any" no build da Vercel */
+type PickerRow = {
+  pickerId: string;
+  name: string;
+  boxes: number;
+  value: number;
+};
+
+type ShiftData = {
+  id: string;
+  orchardNameSnapshot?: string;
+  pricePerBox: number;
+  createdAt: number;
+  shiftNumber: number;
+  rows: PickerRow[];
+  totalBoxes: number;
+  totalValue: number;
+};
+
+type OrchardData = {
+  orchardName: string;
+  rows: PickerRow[];
+  totalBoxes: number;
+  totalValue: number;
+  shifts: ShiftData[];
+};
+
 export default function DaySummaryPage() {
   const params = useParams();
   const workdayId = (params as any).id as string;
 
-  const [isClosing, setIsClosing] = useState(false); // ✅ CORREÇÃO
-  const [isReopening, setIsReopening] = useState(false); // (preparado p/ reabrir caso você use)
-  const [showCloseModal, setShowCloseModal] = useState(false); // (mantive, caso você use modal depois)
-  const [showReopenModal, setShowReopenModal] = useState(false); // (mantive)
+  const [isClosing, setIsClosing] = useState(false);
+  const [isReopening, setIsReopening] = useState(false);
+  const [showCloseModal, setShowCloseModal] = useState(false);
+  const [showReopenModal, setShowReopenModal] = useState(false);
 
   const workday = useLiveQuery(
     () => (workdayId ? db.workdays.get(workdayId) : undefined),
@@ -48,17 +75,17 @@ export default function DaySummaryPage() {
   const isClosed = workday?.status === "closed";
 
   // ---------------- SHIFT DETAILS ----------------
-  const shiftsData = useMemo(() => {
+  const shiftsData: ShiftData[] = useMemo(() => {
     if (!shifts || !allCounts || !pickers) return [];
 
-    const sortedShifts = [...shifts].sort((a, b) => a.createdAt - b.createdAt);
+    const sortedShifts = [...shifts].sort((a: any, b: any) => a.createdAt - b.createdAt);
 
-    return sortedShifts.map((shift, index) => {
-      const shiftCounts = allCounts.filter((c) => c.shiftId === shift.id);
+    return sortedShifts.map((shift: any, index: number) => {
+      const shiftCounts = allCounts.filter((c: any) => c.shiftId === shift.id);
 
-      const rows = shiftCounts
-        .map((c) => {
-          const picker = pickers.find((p) => p.id === c.pickerId);
+      const rows: PickerRow[] = shiftCounts
+        .map((c: any) => {
+          const picker = pickers.find((p: any) => p.id === c.pickerId);
           return {
             pickerId: c.pickerId,
             name: picker?.name || "Desconhecido",
@@ -66,15 +93,18 @@ export default function DaySummaryPage() {
             value: c.boxes * shift.pricePerBox,
           };
         })
-        .filter((r) => r.boxes > 0)
-        .sort((a, b) => b.boxes - a.boxes);
+        .filter((r: PickerRow) => r.boxes > 0)
+        .sort((a: PickerRow, b: PickerRow) => b.boxes - a.boxes);
 
-      const totalBoxes = rows.reduce((sum, r) => sum + r.boxes, 0);
-      const totalValue = rows.reduce((sum, r) => sum + r.value, 0);
+      const totalBoxes = rows.reduce((sum: number, r: PickerRow) => sum + r.boxes, 0);
+      const totalValue = rows.reduce((sum: number, r: PickerRow) => sum + r.value, 0);
 
       return {
+        id: shift.id,
+        orchardNameSnapshot: shift.orchardNameSnapshot,
+        pricePerBox: shift.pricePerBox,
+        createdAt: shift.createdAt,
         shiftNumber: index + 1,
-        ...shift,
         rows,
         totalBoxes,
         totalValue,
@@ -84,15 +114,12 @@ export default function DaySummaryPage() {
 
   // ---------------- DAY TOTALS ----------------
   const dayTotals = useMemo(() => {
-    if (!shiftsData) return { rows: [], totalBoxes: 0, totalValue: 0 };
+    if (!shiftsData) return { rows: [] as PickerRow[], totalBoxes: 0, totalValue: 0 };
 
-    const pickerMap = new Map<
-      string,
-      { pickerId: string; name: string; boxes: number; value: number }
-    >();
+    const pickerMap = new Map<string, PickerRow>();
 
     shiftsData.forEach((shiftData) => {
-      shiftData.rows.forEach((row) => {
+      shiftData.rows.forEach((row: PickerRow) => {
         const current =
           pickerMap.get(row.pickerId) || {
             pickerId: row.pickerId,
@@ -114,61 +141,60 @@ export default function DaySummaryPage() {
 
     return { rows, totalBoxes, totalValue };
   }, [shiftsData]);
+
   // ---------------- ORCHARD TOTALS (quando troca de pomar no mesmo dia) ----------------
-  const orchardsData = useMemo(() => {
+  const orchardsData: OrchardData[] = useMemo(() => {
     if (!shiftsData) return [];
 
-    const orchardMap = new Map<
-      string,
-      {
-        orchardName: string;
-        rows: { pickerId: string; name: string; boxes: number; value: number }[];
-        totalBoxes: number;
-        totalValue: number;
-        shifts: typeof shiftsData;
-      }
-    >();
+    const orchardMap = new Map<string, OrchardData>();
 
     shiftsData.forEach((shift) => {
       const key = shift.orchardNameSnapshot || "Sem Pomar";
+
       const existing =
-        orchardMap.get(key) ||
-        ({
+        orchardMap.get(key) || {
           orchardName: key,
           rows: [],
           totalBoxes: 0,
           totalValue: 0,
           shifts: [],
-        } as any);
+        };
 
       existing.shifts.push(shift);
       existing.totalBoxes += shift.totalBoxes;
       existing.totalValue += shift.totalValue;
 
       // agrega por colhedor dentro do pomar
-      const pickerMap = new Map<string, { pickerId: string; name: string; boxes: number; value: number }>();
-      existing.rows.forEach((r) => pickerMap.set(r.pickerId, { ...r }));
+      const pickerMap = new Map<string, PickerRow>();
 
-      shift.rows.forEach((r) => {
-        const cur = pickerMap.get(r.pickerId) || { pickerId: r.pickerId, name: r.name, boxes: 0, value: 0 };
+      existing.rows.forEach((r: PickerRow) => {
+        pickerMap.set(r.pickerId, { ...r });
+      });
+
+      shift.rows.forEach((r: PickerRow) => {
+        const cur =
+          pickerMap.get(r.pickerId) || {
+            pickerId: r.pickerId,
+            name: r.name,
+            boxes: 0,
+            value: 0,
+          };
         cur.boxes += r.boxes;
         cur.value += r.value;
         pickerMap.set(r.pickerId, cur);
       });
 
       existing.rows = Array.from(pickerMap.values()).sort((a, b) => b.boxes - a.boxes);
-
       orchardMap.set(key, existing);
     });
 
     return Array.from(orchardMap.values()).sort((a, b) => b.totalBoxes - a.totalBoxes);
   }, [shiftsData]);
 
-
   // ✅ FECHAR DIA (com trava anti-duplo clique)
   const handleCloseDay = async () => {
     if (!workdayId) return;
-    if (isClosing) return; // ✅ evita duplo clique
+    if (isClosing) return;
 
     try {
       setIsClosing(true);
@@ -220,7 +246,6 @@ export default function DaySummaryPage() {
         .replace(".", ",")}\n`;
     });
 
-    // Total geral
     csvContent += `TOTAL;${dayTotals.totalBoxes};${dayTotals.totalValue
       .toFixed(2)
       .replace(".", ",")}\n`;
@@ -240,8 +265,7 @@ export default function DaySummaryPage() {
       <main className="max-w-md mx-auto p-4 space-y-6">
         <h2 className="text-2xl font-bold text-center">{dateDisplay}</h2>
 
-        
-        {/* 1) Por Pomar (se trocar de pomar no mesmo dia) */}
+        {/* 1) Por Pomar */}
         <div className="space-y-3">
           <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide border-b pb-1">
             Por Pomar
@@ -316,7 +340,6 @@ export default function DaySummaryPage() {
           </div>
         </Card>
 
-
         <div className="space-y-3">
           {isClosed ? (
             <>
@@ -332,7 +355,7 @@ export default function DaySummaryPage() {
                 Exportar CSV
               </Button>
 
-              {/* Se quiser reabrir com botão depois, me fale que eu reativo aqui */}
+              {/* Se quiser reabrir com botão depois, eu reativo */}
               {/* <Button onClick={handleReopenDay} variant="secondary" className="w-full" disabled={isReopening}>
                 Reabrir Dia
               </Button> */}
