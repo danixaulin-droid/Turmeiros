@@ -107,6 +107,20 @@ export default function WeekPage() {
     // A. Daily Summaries
     const dailySummaries = sortedClosedWorkdays.map(day => {
         const dayCounts = counts.filter(c => c.workdayId === day.id);
+
+        // Agrupa por pomar (se mudou de pomar no mesmo dia)
+        const orchardMap = new Map<string, { orchardName: string; totalBoxes: number; totalValue: number }>();
+        dayCounts.forEach(c => {
+            if (!c.boxes || c.boxes <= 0) return;
+            const shift = shifts.find(s => s.id === c.shiftId);
+            if (!shift) return;
+            const key = shift.orchardNameSnapshot || 'Sem Pomar';
+            const cur = orchardMap.get(key) || { orchardName: key, totalBoxes: 0, totalValue: 0 };
+            cur.totalBoxes += c.boxes;
+            cur.totalValue += c.boxes * shift.pricePerBox;
+            orchardMap.set(key, cur);
+        });
+        const orchards = Array.from(orchardMap.values()).sort((a,b) => b.totalBoxes - a.totalBoxes);
         let dayBoxes = 0;
         let dayValue = 0;
         dayCounts.forEach(c => {
@@ -123,7 +137,8 @@ export default function WeekPage() {
             dateFormatted: format(dateObj, 'dd/MM/yyyy'),
             weekDay: format(dateObj, 'EEEE', { locale: ptBR }),
             totalBoxes: dayBoxes,
-            totalValue: dayValue
+            totalValue: dayValue,
+            orchards
         };
     });
 
@@ -331,6 +346,19 @@ export default function WeekPage() {
                                     <div className="flex gap-3 text-xs mt-1">
                                         <span className="bg-gray-200 text-gray-700 px-2 rounded font-bold">Total: {day.totalBoxes} cx</span>
                                     </div>
+
+                                    {day.orchards?.length ? (
+                                      <div className="flex flex-wrap gap-2 text-xs mt-2">
+                                        {day.orchards.map((o) => (
+                                          <span
+                                            key={o.orchardName}
+                                            className="bg-blue-50 text-blue-900 border border-blue-200 px-2 py-0.5 rounded font-bold"
+                                          >
+                                            {o.orchardName}: {o.totalBoxes} cx
+                                          </span>
+                                        ))}
+                                      </div>
+                                    ) : null}
                                 </div>
                                 <div className="text-right flex items-center gap-2">
                                     <span className="font-bold text-green-700">{formatCurrency(day.totalValue)}</span>
@@ -347,6 +375,19 @@ export default function WeekPage() {
                                         <div className="flex gap-3 text-xs mt-1">
                                             <span className="bg-blue-100 text-blue-900 px-2 rounded font-bold">Total: {day.totalBoxes} cx</span>
                                         </div>
+
+                                    {day.orchards?.length ? (
+                                      <div className="flex flex-wrap gap-2 text-xs mt-2">
+                                        {day.orchards.map((o) => (
+                                          <span
+                                            key={o.orchardName}
+                                            className="bg-blue-50 text-blue-900 border border-blue-200 px-2 py-0.5 rounded font-bold"
+                                          >
+                                            {o.orchardName}: {o.totalBoxes} cx
+                                          </span>
+                                        ))}
+                                      </div>
+                                    ) : null}
                                     </div>
                                     <div className="text-right flex items-center gap-2">
                                         <span className="font-bold text-green-700">{formatCurrency(day.totalValue)}</span>

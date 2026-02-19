@@ -114,6 +114,56 @@ export default function DaySummaryPage() {
 
     return { rows, totalBoxes, totalValue };
   }, [shiftsData]);
+  // ---------------- ORCHARD TOTALS (quando troca de pomar no mesmo dia) ----------------
+  const orchardsData = useMemo(() => {
+    if (!shiftsData) return [];
+
+    const orchardMap = new Map<
+      string,
+      {
+        orchardName: string;
+        rows: { pickerId: string; name: string; boxes: number; value: number }[];
+        totalBoxes: number;
+        totalValue: number;
+        shifts: typeof shiftsData;
+      }
+    >();
+
+    shiftsData.forEach((shift) => {
+      const key = shift.orchardNameSnapshot || "Sem Pomar";
+      const existing =
+        orchardMap.get(key) ||
+        ({
+          orchardName: key,
+          rows: [],
+          totalBoxes: 0,
+          totalValue: 0,
+          shifts: [],
+        } as any);
+
+      existing.shifts.push(shift);
+      existing.totalBoxes += shift.totalBoxes;
+      existing.totalValue += shift.totalValue;
+
+      // agrega por colhedor dentro do pomar
+      const pickerMap = new Map<string, { pickerId: string; name: string; boxes: number; value: number }>();
+      existing.rows.forEach((r) => pickerMap.set(r.pickerId, { ...r }));
+
+      shift.rows.forEach((r) => {
+        const cur = pickerMap.get(r.pickerId) || { pickerId: r.pickerId, name: r.name, boxes: 0, value: 0 };
+        cur.boxes += r.boxes;
+        cur.value += r.value;
+        pickerMap.set(r.pickerId, cur);
+      });
+
+      existing.rows = Array.from(pickerMap.values()).sort((a, b) => b.boxes - a.boxes);
+
+      orchardMap.set(key, existing);
+    });
+
+    return Array.from(orchardMap.values()).sort((a, b) => b.totalBoxes - a.totalBoxes);
+  }, [shiftsData]);
+
 
   // ✅ FECHAR DIA (com trava anti-duplo clique)
   const handleCloseDay = async () => {
@@ -190,21 +240,82 @@ export default function DaySummaryPage() {
       <main className="max-w-md mx-auto p-4 space-y-6">
         <h2 className="text-2xl font-bold text-center">{dateDisplay}</h2>
 
+        
+        {/* 1) Por Pomar (se trocar de pomar no mesmo dia) */}
+        <div className="space-y-3">
+          <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide border-b pb-1">
+            Por Pomar
+          </h3>
+
+          {orchardsData.map((orch) => (
+            <Card key={orch.orchardName}>
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-black text-gray-900 text-lg leading-tight">
+                      {orch.orchardName}
+                    </div>
+                    <div className="text-xs text-gray-500 font-semibold mt-1">
+                      {orch.shifts.length} turno(s)
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="font-black text-gray-900">{orch.totalBoxes} cx</div>
+                    <div className="text-xs font-bold text-green-700">
+                      {formatCurrency(orch.totalValue)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 border-t pt-3 space-y-2">
+                  {orch.rows.map((row) => (
+                    <div
+                      key={row.pickerId}
+                      className="flex justify-between items-center text-sm"
+                    >
+                      <span className="text-gray-800 font-medium">{row.name}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="font-black text-gray-900">{row.boxes}</span>
+                        <span className="w-20 text-right text-green-700 font-semibold">
+                          {formatCurrency(row.value)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+
+                  {orch.rows.length === 0 && (
+                    <div className="text-center text-xs text-gray-400 py-2">
+                      Nenhuma caixa marcada neste pomar.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* 2) Total do Dia */}
         <Card>
           <div className="p-4 space-y-2">
             {dayTotals.rows.map((row) => (
               <div key={row.pickerId} className="flex justify-between text-sm">
-                <span>{row.name}</span>
-                <span className="font-bold">{row.boxes} cx</span>
+                <span className="text-gray-800 font-medium">{row.name}</span>
+                <span className="font-black text-gray-900">{row.boxes} cx</span>
               </div>
             ))}
 
-            <div className="pt-3 mt-3 border-t flex justify-between font-bold">
+            <div className="pt-3 mt-3 border-t flex justify-between font-black">
               <span>Total</span>
               <span>{dayTotals.totalBoxes} cx</span>
             </div>
+            <div className="flex justify-between font-black text-green-700">
+              <span>Total a Pagar</span>
+              <span>{formatCurrency(dayTotals.totalValue)}</span>
+            </div>
           </div>
         </Card>
+
 
         <div className="space-y-3">
           {isClosed ? (
