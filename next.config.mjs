@@ -12,17 +12,31 @@ const pwaConfig = withPWA({
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
 
-  // ✅ Faz cache do start-url e navegação do app (essencial pro “100% offline”)
+  // ✅ melhora MUITO o offline no App Router
   cacheStartUrl: true,
   cacheOnFrontendNav: true,
 
-  // ✅ App Router fallback
+  // ✅ App Router offline fallback
   fallbacks: {
     document: "/~offline",
   },
 
+  // ✅ faz o SW assumir controle sem precisar “reabrir”
+  extendDefaultRuntimeCaching: true,
+
   workboxOptions: {
-    // ✅ use o padrão do plugin + seus extras
+    clientsClaim: true,
+    skipWaiting: true,
+
+    // ✅ pré-cache de rotas principais (app shell)
+    additionalManifestEntries: [
+      { url: "/", revision: null },
+      { url: "/day/new", revision: null },
+      { url: "/week", revision: null },
+      { url: "/settings", revision: null },
+      { url: "/~offline", revision: null },
+    ],
+
     runtimeCaching: [
       // ✅ NEXT STATIC (essencial)
       {
@@ -31,6 +45,17 @@ const pwaConfig = withPWA({
         options: {
           cacheName: "next-static",
           expiration: { maxEntries: 256, maxAgeSeconds: 30 * 24 * 60 * 60 },
+          cacheableResponse: { statuses: [0, 200] },
+        },
+      },
+
+      // ✅ NEXT DATA (quando existir)
+      {
+        urlPattern: /^\/_next\/data\/.*\/.*\.json$/i,
+        handler: "StaleWhileRevalidate",
+        options: {
+          cacheName: "next-data",
+          expiration: { maxEntries: 128, maxAgeSeconds: 30 * 24 * 60 * 60 },
           cacheableResponse: { statuses: [0, 200] },
         },
       },
@@ -46,14 +71,14 @@ const pwaConfig = withPWA({
         },
       },
 
-      // ✅ Navegação (páginas/rotas)
+      // ✅ Navegação: melhor estratégia pra app offline é StaleWhileRevalidate
+      // (evita cair no offline quando o cache já existe)
       {
         urlPattern: ({ request }) => request.mode === "navigate",
-        handler: "NetworkFirst",
+        handler: "StaleWhileRevalidate",
         options: {
           cacheName: "pages",
-          networkTimeoutSeconds: 3,
-          expiration: { maxEntries: 128, maxAgeSeconds: 30 * 24 * 60 * 60 },
+          expiration: { maxEntries: 256, maxAgeSeconds: 30 * 24 * 60 * 60 },
           cacheableResponse: { statuses: [0, 200] },
         },
       },
