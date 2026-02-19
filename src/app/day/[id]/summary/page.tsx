@@ -241,7 +241,8 @@ export default function DaySummaryPage() {
             </>
           ) : (
             <Button
-              onClick={() => setShowCloseModal(true)}
+              onClick={handleCloseDay}
+              disabled={isClosing}
               variant="danger"
               className="w-full"
             >
