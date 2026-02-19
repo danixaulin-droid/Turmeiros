@@ -10,33 +10,23 @@ import { Button } from "../../../../components/ui/Button";
 import { Card } from "../../../../components/ui/Card";
 import { formatCurrency } from "../../../../lib/utils";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import FileSaver from "file-saver";
-import {
-  Download,
-  Check,
-  Lock,
-  AlertTriangle,
-  ChevronDown,
-  ChevronUp,
-  CalendarDays,
-  Unlock,
-} from "lucide-react";
+import { Download, Check, CalendarDays } from "lucide-react";
 
 export default function DaySummaryPage() {
   const params = useParams();
   const workdayId = (params as any).id as string;
 
-  const [showCloseModal, setShowCloseModal] = useState(false);
-  const [showReopenModal, setShowReopenModal] = useState(false);
-  const [expandedShifts, setExpandedShifts] = useState<
-    Record<string, boolean>
-  >({});
+  const [isClosing, setIsClosing] = useState(false); // ✅ CORREÇÃO
+  const [isReopening, setIsReopening] = useState(false); // (preparado p/ reabrir caso você use)
+  const [showCloseModal, setShowCloseModal] = useState(false); // (mantive, caso você use modal depois)
+  const [showReopenModal, setShowReopenModal] = useState(false); // (mantive)
 
   const workday = useLiveQuery(
     () => (workdayId ? db.workdays.get(workdayId) : undefined),
     [workdayId]
   );
+
   const shifts = useLiveQuery(
     () =>
       workdayId
@@ -44,6 +34,7 @@ export default function DaySummaryPage() {
         : [],
     [workdayId]
   );
+
   const allCounts = useLiveQuery(
     () =>
       workdayId
@@ -51,6 +42,7 @@ export default function DaySummaryPage() {
         : [],
     [workdayId]
   );
+
   const pickers = useLiveQuery(() => db.pickers.toArray());
 
   const isClosed = workday?.status === "closed";
@@ -59,14 +51,10 @@ export default function DaySummaryPage() {
   const shiftsData = useMemo(() => {
     if (!shifts || !allCounts || !pickers) return [];
 
-    const sortedShifts = [...shifts].sort(
-      (a, b) => a.createdAt - b.createdAt
-    );
+    const sortedShifts = [...shifts].sort((a, b) => a.createdAt - b.createdAt);
 
     return sortedShifts.map((shift, index) => {
-      const shiftCounts = allCounts.filter(
-        (c) => c.shiftId === shift.id
-      );
+      const shiftCounts = allCounts.filter((c) => c.shiftId === shift.id);
 
       const rows = shiftCounts
         .map((c) => {
@@ -94,19 +82,13 @@ export default function DaySummaryPage() {
     });
   }, [shifts, allCounts, pickers]);
 
-  // ---------------- DAY TOTALS (CORRIGIDO) ----------------
+  // ---------------- DAY TOTALS ----------------
   const dayTotals = useMemo(() => {
-    if (!shiftsData)
-      return { rows: [], totalBoxes: 0, totalValue: 0 };
+    if (!shiftsData) return { rows: [], totalBoxes: 0, totalValue: 0 };
 
     const pickerMap = new Map<
       string,
-      {
-        pickerId: string;
-        name: string;
-        boxes: number;
-        value: number;
-      }
+      { pickerId: string; name: string; boxes: number; value: number }
     >();
 
     shiftsData.forEach((shiftData) => {
@@ -126,51 +108,61 @@ export default function DaySummaryPage() {
       });
     });
 
-    const rows = Array.from(pickerMap.values()).sort(
-      (a, b) => b.value - a.value
-    );
-
-    const totalBoxes = rows.reduce(
-      (sum, r) => sum + r.boxes,
-      0
-    );
-    const totalValue = rows.reduce(
-      (sum, r) => sum + r.value,
-      0
-    );
+    const rows = Array.from(pickerMap.values()).sort((a, b) => b.value - a.value);
+    const totalBoxes = rows.reduce((sum, r) => sum + r.boxes, 0);
+    const totalValue = rows.reduce((sum, r) => sum + r.value, 0);
 
     return { rows, totalBoxes, totalValue };
   }, [shiftsData]);
 
-  const toggleShift = (shiftId: string) => {
-    setExpandedShifts((prev) => ({
-      ...prev,
-      [shiftId]: !prev[shiftId],
-    }));
-  };
-
+  // ✅ FECHAR DIA (com trava anti-duplo clique)
   const handleCloseDay = async () => {
-    if (workdayId) {
-      await db.workdays.update(workdayId, { status: 'closed', closedAt: Date.now() });
+    if (!workdayId) return;
+    if (isClosing) return; // ✅ evita duplo clique
+
+    try {
+      setIsClosing(true);
+
+      await db.workdays.update(workdayId, {
+        status: "closed",
+        closedAt: Date.now(),
+      });
+
       setShowCloseModal(false);
+    } catch (err) {
+      console.error("Erro ao fechar o dia:", err);
+      alert("Não foi possível fechar o dia. Tente novamente.");
+    } finally {
+      setIsClosing(false);
     }
   };
 
+  // ✅ REABRIR (se você usar depois)
   const handleReopenDay = async () => {
-    if (workdayId) {
+    if (!workdayId) return;
+    if (isReopening) return;
+
+    try {
+      setIsReopening(true);
+
       await db.workdays.update(workdayId, {
         status: "open",
         reopenedAt: Date.now(),
       });
+
       setShowReopenModal(false);
+    } catch (err) {
+      console.error("Erro ao reabrir o dia:", err);
+      alert("Não foi possível reabrir o dia. Tente novamente.");
+    } finally {
+      setIsReopening(false);
     }
   };
 
   const exportCSV = () => {
     if (!workday) return;
 
-    let csvContent =
-      "Colhedor;Caixas;Valor_Total\n";
+    let csvContent = "Colhedor;Caixas;Valor_Total\n";
 
     dayTotals.rows.forEach((row) => {
       csvContent += `${row.name};${row.boxes};${row.value
@@ -178,45 +170,39 @@ export default function DaySummaryPage() {
         .replace(".", ",")}\n`;
     });
 
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8",
-    });
-    FileSaver.saveAs(
-      blob,
-      `relatorio_dia_${workday.date}.csv`
-    );
+    // Total geral
+    csvContent += `TOTAL;${dayTotals.totalBoxes};${dayTotals.totalValue
+      .toFixed(2)
+      .replace(".", ",")}\n`;
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    FileSaver.saveAs(blob, `relatorio_dia_${workday.date}.csv`);
   };
 
-  if (!workday)
-    return <div className="p-4">Carregando...</div>;
+  if (!workday) return <div className="p-4">Carregando...</div>;
 
-  const dateDisplay = format(
-    new Date(workday.date + "T00:00:00"),
-    "dd/MM/yyyy"
-  );
+  const dateDisplay = format(new Date(workday.date + "T00:00:00"), "dd/MM/yyyy");
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Header title="Resumo e Fechamento" showBack />
 
       <main className="max-w-md mx-auto p-4 space-y-6">
-        <h2 className="text-2xl font-bold text-center">
-          {dateDisplay}
-        </h2>
+        <h2 className="text-2xl font-bold text-center">{dateDisplay}</h2>
 
         <Card>
           <div className="p-4 space-y-2">
             {dayTotals.rows.map((row) => (
-              <div
-                key={row.pickerId}
-                className="flex justify-between text-sm"
-              >
+              <div key={row.pickerId} className="flex justify-between text-sm">
                 <span>{row.name}</span>
-                <span className="font-bold">
-                  {row.boxes} cx
-                </span>
+                <span className="font-bold">{row.boxes} cx</span>
               </div>
             ))}
+
+            <div className="pt-3 mt-3 border-t flex justify-between font-bold">
+              <span>Total</span>
+              <span>{dayTotals.totalBoxes} cx</span>
+            </div>
           </div>
         </Card>
 
@@ -230,14 +216,15 @@ export default function DaySummaryPage() {
                 </Button>
               </Link>
 
-              <Button
-                onClick={exportCSV}
-                variant="outline"
-                className="w-full"
-              >
+              <Button onClick={exportCSV} variant="outline" className="w-full">
                 <Download className="mr-2 w-4 h-4" />
                 Exportar CSV
               </Button>
+
+              {/* Se quiser reabrir com botão depois, me fale que eu reativo aqui */}
+              {/* <Button onClick={handleReopenDay} variant="secondary" className="w-full" disabled={isReopening}>
+                Reabrir Dia
+              </Button> */}
             </>
           ) : (
             <Button
@@ -247,7 +234,7 @@ export default function DaySummaryPage() {
               className="w-full"
             >
               <Check className="mr-2 w-4 h-4" />
-              Fechar Dia
+              {isClosing ? "Fechando..." : "Fechar Dia"}
             </Button>
           )}
         </div>
