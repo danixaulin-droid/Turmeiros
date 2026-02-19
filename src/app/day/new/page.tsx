@@ -70,8 +70,9 @@ export default function NewDayPage() {
             id: workdayId,
             date,
             pickerIds: uniquePickerIds,
-            createdAt: Date.now()
-        });
+            createdAt: Date.now(),
+      status: 'open'
+    });
 
         // 2. Create First Shift (Turno 1)
         await db.shifts.add({

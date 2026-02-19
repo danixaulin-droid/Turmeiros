@@ -151,10 +151,7 @@ export default function DaySummaryPage() {
 
   const handleCloseDay = async () => {
     if (workdayId) {
-      await db.workdays.update(workdayId, {
-        status: "closed",
-        closedAt: Date.now(),
-      });
+      await db.workdays.update(workdayId, { status: 'closed', closedAt: Date.now() });
       setShowCloseModal(false);
     }
   };

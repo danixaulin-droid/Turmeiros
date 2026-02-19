@@ -73,7 +73,21 @@ class TurmeiroDatabase extends Dexie {
       counts: 'id, workdayId, shiftId, pickerId, [shiftId+pickerId], [workdayId+pickerId]',
       weeks: 'id, weekStart, status' // New table for weekly closures
     });
-  }
+      (this as any).version(2).stores({
+      pickers: 'id, name, active, createdAt',
+      orchards: 'id, name, active, createdAt',
+      workdays: 'id, date, createdAt, status',
+      shifts: 'id, workdayId, orchardId, createdAt, [workdayId+createdAt]',
+      counts: 'id, workdayId, shiftId, pickerId, [shiftId+pickerId], [workdayId+pickerId]',
+      weeks: 'id, weekStart, status' // New table for weekly closures
+    }).upgrade(async (tx: any) => {
+      // Backfill status for existing workdays so queries keep working
+      const workdays = tx.table('workdays');
+      await workdays.toCollection().modify((w: any) => {
+        if (!w.status) w.status = w.closedAt ? 'closed' : 'open';
+      });
+    });
+}
 }
 
 export const db = new TurmeiroDatabase();

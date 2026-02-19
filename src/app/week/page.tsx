@@ -63,11 +63,12 @@ export default function WeekPage() {
   const closedWorkdays = useLiveQuery(
     () => db.workdays
             .where('date').between(startStr, endStr, true, true)
-            .filter(w => w.status === 'closed')
+            // Robust: consider closed if status === 'closed' OR closedAt exists
+            .filter(w => w?.status === 'closed' || !!(w as any)?.closedAt)
             .toArray(),
     [startStr, endStr]
   );
-  
+
   const sortedClosedWorkdays = useMemo(() => 
     (closedWorkdays || []).sort((a,b) => a.date.localeCompare(b.date)), 
   [closedWorkdays]);
