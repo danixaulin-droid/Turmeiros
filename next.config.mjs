@@ -12,15 +12,43 @@ const pwaConfig = withPWA({
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
 
-  // Importante: fallback quando não há cache da página ainda
+  // fallback offline (você precisa ter uma rota /offline)
   fallbacks: {
-    document: "/offline", // você precisa ter a rota /offline no app (te explico abaixo)
+    document: "/offline",
   },
 
   buildExcludes: [/middleware-manifest\.json$/],
   publicExcludes: ["!robots.txt", "!sitemap.xml"],
 
   runtimeCaching: [
+    // ✅ 0) NEXT STATIC (ESSENCIAL PRO OFFLINE)
+    {
+      urlPattern: /^\/_next\/static\/.*/i,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "next-static",
+        expiration: {
+          maxEntries: 128,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 dias
+        },
+        cacheableResponse: { statuses: [0, 200] },
+      },
+    },
+
+    // ✅ 0.1) ASSETS DO /public (icons, manifest, etc)
+    {
+      urlPattern: /^\/(icons|manifest\.json|favicon\.ico|sw\.js).*/i,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "public-assets",
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 30 * 24 * 60 * 60,
+        },
+        cacheableResponse: { statuses: [0, 200] },
+      },
+    },
+
     // ✅ 1) CACHE DE NAVEGAÇÃO (PÁGINAS / ROTAS)
     {
       urlPattern: ({ request }) => request.mode === "navigate",
@@ -69,7 +97,7 @@ const pwaConfig = withPWA({
       },
     },
 
-    // ✅ 5) JS
+    // ✅ 5) JS (arquivos fora do _next/static)
     {
       urlPattern: /\.(?:js)$/i,
       handler: "StaleWhileRevalidate",
