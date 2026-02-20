@@ -34,7 +34,7 @@ export default function MarkPage() {
     isEasyMode ? "list" : "grid"
   );
 
-  // ✅ NÃO setState durante render (isso pode dar bug/saltos)
+  // ✅ NÃO setState durante render
   useEffect(() => {
     if (isEasyMode) setViewMode("list");
   }, [isEasyMode]);
@@ -124,11 +124,9 @@ export default function MarkPage() {
   const shiftTotalValue = (activeShift?.pricePerBox || 0) * shiftTotalBoxes;
 
   // --- ACTIONS ---
-
   const updateCount = async (countId: string, delta: number) => {
     if (isClosed) return;
 
-    // Safety check for negative values in Easy Mode
     if (delta < 0 && isEasyMode) {
       const current = activeShiftCounts?.find((c) => c.id === countId);
       if (!current || current.boxes <= 0) return;
@@ -152,7 +150,9 @@ export default function MarkPage() {
   const resetCount = async (countId: string) => {
     if (isClosed) return;
     if (
-      confirm("Tem certeza que deseja ZERAR (apagar) todas as caixas deste colhedor?")
+      confirm(
+        "Tem certeza que deseja ZERAR (apagar) todas as caixas deste colhedor?"
+      )
     ) {
       await db.counts.update(countId, { boxes: 0, updatedAt: Date.now() });
     }
@@ -169,7 +169,6 @@ export default function MarkPage() {
     try {
       const shiftId = generateUUID();
 
-      // 1. Create Shift
       await db.shifts.add({
         id: shiftId,
         workdayId,
@@ -179,7 +178,6 @@ export default function MarkPage() {
         createdAt: Date.now(),
       });
 
-      // 2. Initialize Counts for ALL pickers in workday
       const countPromises = workday.pickerIds.map((pickerId) => ({
         id: generateUUID(),
         workdayId,
@@ -201,11 +199,7 @@ export default function MarkPage() {
     }
   };
 
-  /**
-   * ✅ OFFLINE FIX PRINCIPAL:
-   * - useLiveQuery retorna undefined no início (inicializando)
-   * - NÃO pode cair no fallback do PWA por causa de "Carregando..." cedo demais
-   */
+  // ✅ evita “sumir” offline quando o Dexie ainda está iniciando
   if (workday === undefined || shifts === undefined || pickers === undefined) {
     return (
       <div className="p-10 text-center font-bold text-lg">
@@ -268,17 +262,13 @@ export default function MarkPage() {
               (Pomar + Preço).
             </p>
 
-            <Button
-              className="w-full mt-4"
-              onClick={() => setShowShiftModal(true)}
-            >
+            <Button className="w-full mt-4" onClick={() => setShowShiftModal(true)}>
               <RefreshCw className="w-5 h-5 mr-2" />
               CRIAR 1º LOCAL
             </Button>
           </div>
         </main>
 
-        {/* NEW SHIFT MODAL (mesmo modal do final) */}
         {showShiftModal && (
           <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border-4 border-gray-900">
@@ -291,10 +281,10 @@ export default function MarkPage() {
                   <X className="w-8 h-8" />
                 </button>
               </div>
+
               <div className="p-6 space-y-6">
                 <div className="bg-yellow-100 text-yellow-900 font-bold text-sm p-4 rounded border-2 border-yellow-500">
-                  Isso cria um <strong>novo local de contagem</strong>. As caixas
-                  ficam salvas por local.
+                  Isso cria um <strong>novo local de contagem</strong>.
                 </div>
 
                 <div>
@@ -420,6 +410,7 @@ export default function MarkPage() {
               Preço: {formatCurrency(activeShift.pricePerBox)} / caixa
             </div>
           </div>
+
           <Button
             size="sm"
             variant="outline"
@@ -514,6 +505,7 @@ export default function MarkPage() {
                   </p>
                 )}
               </div>
+
               <div className="text-right min-w-[80px]">
                 <span
                   className={`block font-black text-blue-900 leading-none ${
@@ -529,14 +521,14 @@ export default function MarkPage() {
             {!isClosed && (
               <div className="p-3 flex flex-col gap-3">
                 {isEasyMode ? (
-                  // EASY MODE BUTTONS (Simplified)
                   <div className="space-y-3">
                     <div className="flex gap-2 h-24">
                       <button
                         onClick={() => updateCount(card.id, 1)}
                         className="flex-1 bg-blue-600 active:bg-blue-700 text-white font-black text-4xl rounded-xl border-b-8 border-blue-900 shadow-md active:border-b-0 active:translate-y-2 transition-all flex items-center justify-center gap-2"
                       >
-                        +1 <span className="text-lg font-bold opacity-70">CAIXA</span>
+                        +1{" "}
+                        <span className="text-lg font-bold opacity-70">CAIXA</span>
                       </button>
                     </div>
 
@@ -567,7 +559,6 @@ export default function MarkPage() {
                     </div>
                   </div>
                 ) : (
-                  // STANDARD MODE BUTTONS
                   <>
                     <div className="grid grid-cols-3 gap-2">
                       <button
@@ -610,7 +601,7 @@ export default function MarkPage() {
                           Zerar
                         </button>
                       ) : (
-                        <div className="h-12"></div>
+                        <div className="h-12" />
                       )}
                     </div>
                   </>
@@ -653,6 +644,7 @@ export default function MarkPage() {
               <span className="text-sm font-bold opacity-50">cx</span>
             </p>
           </div>
+
           <div className="text-right">
             <p
               className={`${
@@ -740,5 +732,7 @@ export default function MarkPage() {
             </div>
           </div>
         </div>
-      );
+      )}
+    </div>
+  );
 }
