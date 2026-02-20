@@ -740,8 +740,5 @@ export default function MarkPage() {
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      );
 }
-```0
